@@ -37,6 +37,23 @@ fi
 # Make sure new JDK is visible to Leiningen
 export PATH="$HOME/.jdk/bin:$PATH"
 
+# extract environment
+if [ -d "$ENV_DIR" ]; then
+    # if BUILD_CONFIG_WHITELIST is set, read it to know which configs to export
+    if [ -r $ENV_DIR/BUILD_CONFIG_WHITELIST ]; then
+        for e in $(cat $ENV_DIR/BUILD_CONFIG_WHITELIST); do
+            export "$e=$(cat $ENV_DIR/$e)"
+        done
+    # otherwise default BUILD_CONFIG_WHITELIST to just private repo creds
+    else
+        for e in LEIN_USERNAME LEIN_PASSWORD LEIN_PASSPHRASE; do
+            if [ -r $ENV_DIR/$e ]; then
+                export "$e=$(cat $ENV_DIR/$e)"
+            fi
+        done
+    fi
+fi
+
 # Determine Leiningen version
 if [ "$(grep ":min-lein-version[[:space:]]\+\"2" $BUILD_DIR/project.clj)" != "" ]; then
   LEIN_VERSION="2.3.4"
@@ -112,23 +129,6 @@ else
 fi
 
 echo "-----> Building with Leiningen"
-
-# extract environment
-if [ -d "$ENV_DIR" ]; then
-    # if BUILD_CONFIG_WHITELIST is set, read it to know which configs to export
-    if [ -r $ENV_DIR/BUILD_CONFIG_WHITELIST ]; then
-        for e in $(cat $ENV_DIR/BUILD_CONFIG_WHITELIST); do
-            export "$e=$(cat $ENV_DIR/$e)"
-        done
-    # otherwise default BUILD_CONFIG_WHITELIST to just private repo creds
-    else
-        for e in LEIN_USERNAME LEIN_PASSWORD LEIN_PASSPHRASE; do
-            if [ -r $ENV_DIR/$e ]; then
-                export "$e=$(cat $ENV_DIR/$e)"
-            fi
-        done
-    fi
-fi
 
 # Calculate build command
 if [ "$BUILD_COMMAND" = "" ]; then
